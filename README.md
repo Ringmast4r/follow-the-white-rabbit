@@ -1,14 +1,14 @@
-# 🐰 Follow the White Rabbit
+# 🐰 Follow the White Rabbit v2 (Java Edition)
 
 > *"I imagine right now you're feeling a bit like Alice, tumbling down the rabbit hole?"*
 
-A command-line mystery game that weaves together **The Matrix** and **Alice in Wonderland** into an interactive narrative experience. Make choices, discover secrets, and explore the philosophical questions at the heart of both stories.
+A command-line mystery game that weaves together **The Matrix** and **Alice in Wonderland** into an interactive narrative experience. This is the Java version - playable on any system with Java installed!
 
 ---
 
 ## 🎮 About
 
-**Follow the White Rabbit** is a text-based adventure that explores the deep connections between Lewis Carroll's *Alice's Adventures in Wonderland* / *Through the Looking-Glass* and the Wachowskis' *The Matrix* trilogy.
+**Follow the White Rabbit v2** is a text-based adventure that explores the deep connections between Lewis Carroll's *Alice's Adventures in Wonderland* / *Through the Looking-Glass* and the Wachowskis' *The Matrix* trilogy.
 
 The game examines timeless questions:
 - What is reality vs. simulation vs. dream?
@@ -27,6 +27,7 @@ Players navigate a branching narrative filled with riddles, philosophical choice
 - 🕳️ **Deep Easter Eggs** - Dozens of references to both Matrix & Alice lore
 - 🔐 **Secret Paths** - Hidden routes for curious players
 - 🔄 **High Replay Value** - Discover all the paths and endings
+- ☕ **Java Edition** - Run on Windows, Mac, Linux - anywhere Java works!
 
 ---
 
@@ -34,29 +35,43 @@ Players navigate a branching narrative filled with riddles, philosophical choice
 
 ### Prerequisites
 
-- Python 3.6 or higher
-- A terminal that supports ANSI color codes (most modern terminals do)
+- **Java Development Kit (JDK) 8 or higher**
+  - Check if you have Java: `java -version`
+  - Download from: [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/)
+- A terminal/command prompt that supports ANSI color codes (most modern terminals do)
 
-### Installation
+### Installation & Running
 
-1. **Clone the repository:**
+1. **Download the game:**
+   - Clone this repository or download `WhiteRabbit.java`
+
+2. **Compile the game:**
    ```bash
-   git clone https://github.com/yourusername/white-rabbit.git
-   cd white-rabbit
+   javac WhiteRabbit.java
    ```
 
-2. **Run the game:**
+3. **Run the game:**
    ```bash
-   python white_rabbit.py
+   java WhiteRabbit
    ```
 
 That's it! No external dependencies required.
+
+### For GitHub Distribution
+
+Users can clone and run with:
+```bash
+git clone https://github.com/yourusername/follow-the-white-rabbit-v2.git
+cd follow-the-white-rabbit-v2
+javac WhiteRabbit.java
+java WhiteRabbit
+```
 
 ---
 
 ## 🎯 How to Play
 
-- Read the story text as it appears
+- Read the story text as it appears with typing animation
 - Make choices by typing numbers (1, 2, 3, etc.) or keywords
 - Type your choice and press **Enter**
 - Some paths have secret keywords - experiment!
@@ -86,20 +101,18 @@ Without spoiling too much, here are the endings you can discover:
 
 ## 🕵️ Easter Eggs & References
 
-This game is packed with references to both *The Matrix* trilogy and *Alice in Wonderland*/*Through the Looking-Glass*. Here are just a few:
+This game is packed with references to both *The Matrix* trilogy and *Alice in Wonderland*/*Through the Looking-Glass*:
 
 ### Matrix References
 - Red pill / Blue pill choice
 - "Follow the White Rabbit"
 - Agent Smith, Jones, Brown
-- The Oracle's kitchen & cookie
+- The Oracle's cookie
 - "There is no spoon"
-- Morpheus as guide/Cheshire Cat
 - Switch character (white + pink)
 - "Know Thyself" plaque
 - Liquid mirror / Looking Glass Server
 - Red Queen as system firewall
-- Nebuchadnezzar references
 
 ### Alice in Wonderland References
 - White Rabbit's pocket watch / "I'm late!"
@@ -111,18 +124,12 @@ This game is packed with references to both *The Matrix* trilogy and *Alice in W
 - "Who in the world am I?"
 - Red Queen's "Off with their heads!"
 - White Queen transformation
-- Pool of Tears
 - Checkered chessboard floor
 - "Curiouser and curiouser"
 - "We're all mad here"
 - Looking-Glass world
-- "Whose dream are we in?" (Red King)
-- Name/identity themes
-- Humpty Dumpty's word philosophy
 
 ### Philosophical Parallels
-- Plato's Cave allegory
-- Descartes' "Doubting Thomas" / evil deceiver
 - Simulation vs. reality vs. dream
 - Identity as choice, not prison
 - "The Matrix cannot tell you who you are"
@@ -176,34 +183,15 @@ This game is packed with references to both *The Matrix* trilogy and *Alice in W
 - 🟡 **YELLOW** - Questions, prompts, uncertainty
 - 🔷 **CYAN** - Cheshire Cat, philosophy, guides
 
----
+### Java Features Used
 
-## 🎓 Educational Context
-
-This game explores the deep philosophical connections between *The Matrix* and *Alice in Wonderland* that the Wachowskis intentionally wove into their film.
-
-### Why Matrix × Alice?
-
-The Wachowski siblings were massive fans of Lewis Carroll and deliberately referenced *Alice* throughout *The Matrix*:
-
-1. **Dual Worlds** - Wonderland/Real World ↔ Matrix/Reality
-2. **Identity Crisis** - "Who am I?" drives both protagonists
-3. **The Guide Figure** - White Rabbit/Cheshire Cat ↔ Morpheus/Trinity
-4. **Ingestibles** - "Drink Me"/"Eat Me" ↔ Red/Blue pills
-5. **Dream vs. Reality** - "Am I dreaming?" in both stories
-6. **Authority Figures** - Queen of Hearts/Card Guards ↔ Agents/Red Queen
-7. **The Mirror** - Looking Glass ↔ Liquid mirror scene
-8. **Transformation** - Size changes ↔ Seeing the code
-9. **Curiosity Rewarded** - Alice's questions ↔ Neo's searching
-
-### Philosophical Themes
-
-Both works tackle:
-- **Epistemology** - What can we know? How do we know it?
-- **Ontology** - What is real? What is existence?
-- **Free Will** - Are our choices our own?
-- **Identity** - Who are we, really?
-- **Simulation Theory** - Could reality be a construct?
+- Single-file application (easy to distribute!)
+- No external dependencies
+- Cross-platform compatible
+- ANSI color codes for terminal styling
+- Thread.sleep() for animations
+- Scanner for user input
+- Recursive method calls for replay functionality
 
 ---
 
@@ -230,7 +218,7 @@ Contributions are welcome! Here are some ways you can help:
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is open source and available under the MIT License.
 
 This is a fan project and is not affiliated with or endorsed by:
 - Warner Bros. (The Matrix)
@@ -246,24 +234,18 @@ This is a fan project and is not affiliated with or endorsed by:
 - **Lewis Carroll** - For *Alice's Adventures in Wonderland* and *Through the Looking-Glass*
 - **Film analysts & fans** - Whose research revealed the connections between these works
 - **Players like you** - For following the white rabbit
-
----
-
-## 📬 Contact
-
-Questions? Feedback? Found all 5 endings?
-
-- Open an issue on GitHub
-- Share your favorite ending!
-- Tell us what easter eggs you discovered
+- **Original Python version** - This Java edition is inspired by the original Python game
 
 ---
 
 ## 🎯 Quick Commands
 
 ```bash
+# Compile the game
+javac WhiteRabbit.java
+
 # Run the game
-python white_rabbit.py
+java WhiteRabbit
 
 # Exit the game (during play)
 Ctrl + C
