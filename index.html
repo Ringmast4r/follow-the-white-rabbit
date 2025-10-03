@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Follow the White Rabbit - Play Now</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        #game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(0, 20, 0, 0.8);
+            padding: 30px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            min-height: 600px;
+        }
+
+        #output {
+            margin-bottom: 20px;
+            min-height: 400px;
+        }
+
+        .line {
+            margin: 5px 0;
+        }
+
+        .green { color: #00ff00; }
+        .red { color: #ff0000; }
+        .blue { color: #4444ff; }
+        .white { color: #ffffff; }
+        .cyan { color: #00ffff; }
+        .yellow { color: #ffff00; }
+        .bold { font-weight: bold; }
+
+        #input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #00ff00;
+        }
+
+        #user-input {
+            flex: 1;
+            background: #000;
+            color: #00ffff;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+
+        #user-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .rabbit {
+            color: #ffffff;
+            white-space: pre;
+        }
+
+        .choices {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        #start-screen {
+            text-align: center;
+            padding: 50px 0;
+        }
+
+        #start-screen h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        #start-screen p {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+        #start-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+        }
+
+        .separator {
+            color: #00ff00;
+            margin: 10px 0;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+
+    <div id="game-container">
+        <div id="start-screen">
+            <h1>🐰 FOLLOW THE WHITE RABBIT 🐰</h1>
+            <p class="cyan">A Mystery Beyond The Looking Glass</p>
+            <p class="white">The Matrix × Alice in Wonderland</p>
+            <p style="margin-top: 30px;">A text-based adventure exploring reality, identity, and choice.</p>
+            <p class="yellow">Are you ready to see how deep the rabbit hole goes?</p>
+            <button id="start-btn">WAKE UP</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div id="output"></div>
+            <div id="input-area">
+                <span class="cyan">&gt;</span>
+                <input type="text" id="user-input" autocomplete="off" disabled>
+                <button id="submit-btn" disabled>Enter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain background effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const katakana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン01';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 33);
+
+        // Game logic
+        const output = document.getElementById('output');
+        const userInput = document.getElementById('user-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startBtn = document.getElementById('start-btn');
+
+        let currentScene = null;
+        let waitingForInput = false;
+        let validChoices = [];
+
+        function print(text, color = 'green', delay = 30) {
+            return new Promise(resolve => {
+                const line = document.createElement('div');
+                line.className = `line ${color}`;
+                output.appendChild(line);
+
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < text.length) {
+                        line.textContent += text[i];
+                        i++;
+                        output.scrollTop = output.scrollHeight;
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+
+        function printInstant(text, color = 'green') {
+            const line = document.createElement('div');
+            line.className = `line ${color}`;
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function showRabbit() {
+            const rabbit = `    (\\_/)
+    (o.o)
+    (> <)  Follow me...`;
+            const line = document.createElement('div');
+            line.className = 'rabbit';
+            line.textContent = rabbit;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function getChoice(options) {
+            validChoices = options;
+            waitingForInput = true;
+            userInput.disabled = false;
+            submitBtn.disabled = false;
+            userInput.focus();
+
+            return new Promise(resolve => {
+                const handler = async () => {
+                    const choice = userInput.value.trim().toLowerCase();
+                    if (validChoices.includes(choice)) {
+                        printInstant(`> ${userInput.value}`, 'cyan');
+                        userInput.value = '';
+                        userInput.disabled = true;
+                        submitBtn.disabled = true;
+                        waitingForInput = false;
+                        submitBtn.removeEventListener('click', handler);
+                        userInput.removeEventListener('keypress', enterHandler);
+                        await sleep(300);
+                        resolve(choice);
+                    } else {
+                        printInstant('> ' + userInput.value, 'cyan');
+                        await print('Invalid choice. Try again.', 'red', 20);
+                        userInput.value = '';
+                    }
+                };
+
+                const enterHandler = (e) => {
+                    if (e.key === 'Enter') handler();
+                };
+
+                submitBtn.addEventListener('click', handler);
+                userInput.addEventListener('keypress', enterHandler);
+            });
+        }
+
+        // Game scenes
+        async function intro() {
+            await print('='.repeat(60), 'green', 10);
+            await print('FOLLOW THE WHITE RABBIT', 'white', 50);
+            await print('A Mystery Beyond The Looking Glass', 'cyan', 30);
+            await print('='.repeat(60), 'green', 10);
+            printInstant('');
+            await sleep(1000);
+
+            await print('You wake at your terminal. 3:33 AM.', 'green', 40);
+            await print('A message blinks on your screen:', 'green', 40);
+            await sleep(500);
+            printInstant('');
+            await print("'Wake up, Neo... The Matrix has you...'", 'green', 50);
+            await print("'Follow the White Rabbit.'", 'green', 50);
+            printInstant('');
+            await sleep(1000);
+
+            await print('A knock at your door.', 'yellow', 40);
+            await sleep(500);
+        }
+
+        async function chapter1() {
+            await print('\n[CHAPTER 1: THE KNOCK]', 'cyan', 30);
+            printInstant('');
+            await print('You hear it again. Knock. Knock. Knock.', 'green', 40);
+            await print('Do you open the door?', 'yellow', 40);
+            printInstant('');
+            printInstant('1. Open the door');
+            printInstant('2. Ignore it and check the message again');
+            printInstant('3. Look through the peephole');
+
+            const choice = await getChoice(['1', '2', '3']);
+
+            if (choice === '1') return await doorOpen();
+            if (choice === '2') return await checkMessage();
+            if (choice === '3') return await peephole();
+        }
+
+        async function doorOpen() {
+            await print('\nYou open the door...', 'green', 40);
+            await sleep(1000);
+            await print('A woman with a white rabbit tattoo stands before you.', 'white', 40);
+            showRabbit();
+            await sleep(1000);
+            await print("'I'm late, I'm late,' she whispers urgently.", 'green', 40);
+            await print("'They're watching. You need to choose. NOW.'", 'red', 40);
+            await sleep(500);
+            return await redBluePill();
+        }
+
+        async function checkMessage() {
+            await print('\nYou return to your terminal.', 'green', 40);
+            await print('The message has changed:', 'green', 40);
+            await sleep(500);
+            await print("\n'Curiosity killed the cat, but you're late for a very important date.'", 'green', 40);
+            await print("'Time is running out. 03:34 AM.'", 'green', 40);
+            await print("'P.S. - Type CHESHIRE if you want to see how deep the rabbit hole really goes...'", 'green', 40);
+            await sleep(1000);
+
+            await print('\nDo you:', 'yellow', 40);
+            printInstant('');
+            printInstant('1. Answer the door');
+            printInstant('2. Type CHESHIRE');
+
+            const choice = await getChoice(['1', '2', 'cheshire']);
+
+            if (choice === '2' || choice === 'cheshire') {
+                return await cheshirePath();
+            } else {
+                await print('\nThe knocking intensifies.', 'red', 40);
+                await print('You should probably answer it...', 'green', 40);
+                await sleep(1000);
+                return await doorOpen();
+            }
+        }
+
+        async function cheshirePath() {
+            output.innerHTML = '';
+            await print('\nYou type: CHESHIRE', 'cyan', 40);
+            await sleep(1000);
+            await print('\nThe screen flickers. Code swirls into the shape of a grinning cat.', 'cyan', 40);
+            await sleep(1000);
+
+            await print('\nA voice - neither male nor female - speaks:', 'cyan', 40);
+            await print("'Well, well... someone who asks the right questions.'", 'cyan', 40);
+            await print("'We're all mad here, you know. I'm mad. You're mad.'", 'cyan', 40);
+            await sleep(1000);
+
+            await print("\n'But let me tell you a secret...'", 'yellow', 40);
+            await print("'The rabbit hole, the pills, the choices - they're all part of the game.'", 'green', 40);
+            await print("'But YOU... you can simply WAKE UP.'", 'green', 40);
+            await sleep(1000);
+
+            await print("\n'No pills. No rabbit. Just... wake up.'", 'white', 40);
+            await sleep(2000);
+            output.innerHTML = '';
+
+            await print('\nYou open your eyes.', 'green', 40);
+            await print("You're at your desk. Morning light streams through the window.", 'green', 40);
+            await print('No Matrix. No Wonderland. Just reality.', 'green', 40);
+            await sleep(1000);
+
+            await print('\nBut on your screen, a message blinks:', 'cyan', 40);
+            await print("'Most people only see what they expect to see. You saw more.'", 'cyan', 40);
+            await print("'The question isn't WHERE you go... but WHY you go there.'", 'cyan', 40);
+            await sleep(1000);
+
+            await print('\nA grin fades from your screen - there one moment, gone the next.', 'cyan', 40);
+
+            return await ending('CHESHIRE');
+        }
+
+        async function peephole() {
+            await print('\nYou peer through the peephole...', 'green', 40);
+            await sleep(1000);
+            await print('A white rabbit in a waistcoat checks a pocket watch.', 'white', 40);
+            await print("Wait... that can't be real.", 'yellow', 40);
+            showRabbit();
+            await sleep(1000);
+            await print("You blink. Now it's a woman with a rabbit tattoo.", 'green', 40);
+            await print("She mouths: 'OPEN THE DOOR'", 'red', 40);
+            await sleep(1000);
+            return await doorOpen();
+        }
+
+        async function redBluePill() {
+            await print('\n[THE CHOICE]', 'cyan', 30);
+            printInstant('');
+            await print('She holds out her hands.', 'green', 40);
+            await sleep(500);
+            await print('In her left hand: a RED pill.', 'red', 40);
+            await print('In her right hand: a BLUE pill.', 'blue', 40);
+            printInstant('');
+            await print("'Red: you see how deep the rabbit hole goes.'", 'red', 40);
+            await print("'Blue: wake up and believe whatever you want.'", 'blue', 40);
+            printInstant('');
+            await print('Which pill do you take?', 'yellow', 40);
+            printInstant('');
+            printInstant('1. RED PILL');
+            printInstant('2. BLUE PILL');
+            printInstant('3. Ask a question first');
+
+            const choice = await getChoice(['1', '2', '3', 'red', 'blue', 'red pill', 'blue pill']);
+
+            if (choice === '1' || choice === 'red' || choice === 'red pill') {
+                return await redPillPath();
+            } else if (choice === '2' || choice === 'blue' || choice === 'blue pill') {
+                return await bluePillPath();
+            } else {
+                return await askQuestion();
+            }
+        }
+
+        async function askQuestion() {
+            await print("\n'Who are you?' you ask.", 'green', 40);
+            await sleep(500);
+            await print('She smiles sadly.', 'green', 40);
+            await print("'I'm the White Rabbit. Or I was. Or I will be.'", 'white', 40);
+            await print("'Time is strange here, between the Matrix and Wonderland.'", 'green', 40);
+            await print("'But we're running out of it. CHOOSE.'", 'red', 40);
+            await sleep(1000);
+            return await redBluePill();
+        }
+
+        async function redPillPath() {
+            await print('\nYou take the RED PILL.', 'red', 40);
+            await sleep(1000);
+            await print('Everything dissolves...', 'green', 40);
+            await sleep(500);
+
+            output.innerHTML = '';
+
+            // Simple matrix rain effect
+            for (let i = 0; i < 20; i++) {
+                const chars = '01アイウエオカキクケコ';
+                let line = '';
+                for (let j = 0; j < 80; j++) {
+                    line += chars[Math.floor(Math.random() * chars.length)];
+                }
+                printInstant(line.substring(0, 80), 'green');
+            }
+
+            await sleep(2000);
+
+            await print("\nYou're falling... down... down... down...", 'green', 40);
+            await print('Through layers of code and rabbit holes...', 'green', 40);
+            await sleep(1000);
+            return await wonderlandMatrix();
+        }
+
+        async function bluePillPath() {
+            await print('\nYou take the BLUE PILL.', 'blue', 40);
+            await sleep(1000);
+            await print('The woman sighs.', 'green', 40);
+            await print("'Perhaps you weren't ready after all...'", 'white', 40);
+            await sleep(1000);
+            await print('\nYou wake up in your bed.', 'green', 40);
+            await print("It was just a dream... wasn't it?", 'green', 40);
+            await sleep(1000);
+            await print("\nBut on your desk, a white rabbit figurine that wasn't there before.", 'white', 40);
+            await print("And a note: 'Next time, choose differently.'", 'cyan', 40);
+            printInstant('');
+            return await ending('BLUE_PILL');
+        }
+
+        async function wonderlandMatrix() {
+            await print('\n[CHAPTER 2: DOWN THE RABBIT HOLE]', 'cyan', 30);
+            printInstant('');
+            await print('You land in a room of impossible geometry.', 'green', 40);
+            await print('Code cascades down the walls like green rain.', 'green', 40);
+            await print('A tea party table floats in the center, defying physics.', 'green', 40);
+            await sleep(1000);
+
+            await print("\nA plaque on the wall reads: 'KNOW THYSELF'", 'yellow', 40);
+            await sleep(500);
+
+            await print('\nAt the table:', 'yellow', 40);
+            await print('- A man in a top hat (the Mad Hatter) types on a keyboard', 'green', 40);
+            await print('- A dormouse sleeps on a server rack, dreaming of encrypted data', 'green', 40);
+            await print('- The March Hare adjusts reality like sliders on a screen', 'green', 40);
+            await sleep(1000);
+
+            await print("\nThe Hatter looks up: 'Ah! The new Alice has arrived!'", 'cyan', 40);
+            await print("'But who ARE you, really? The question that drives us all.'", 'cyan', 40);
+            await print("'Tell me, dear Alice, what is a raven like a writing desk?'", 'cyan', 40);
+            await print("'And more importantly... what is the difference between the simulation and the dream?'", 'cyan', 40);
+            printInstant('');
+
+            await print("The March Hare grins: 'You think that's tea you're drinking?'", 'yellow', 40);
+            await sleep(1000);
+
+            await print('\nHow do you respond?', 'yellow', 40);
+            printInstant('');
+            printInstant("1. 'There is no difference. Both are constructs.'");
+            printInstant("2. 'I'm not Alice. I'm looking for the White Rabbit.'");
+            printInstant("3. 'Why is everyone speaking in riddles?!'");
+            printInstant("4. 'Who in the world am I? That's the great puzzle.'");
+
+            const choice = await getChoice(['1', '2', '3', '4']);
+
+            if (choice === '1') return await philosopherPath();
+            if (choice === '2') return await seekerPath();
+            if (choice === '3') return await frustratedPath();
+            if (choice === '4') return await identityPath();
+        }
+
+        async function philosopherPath() {
+            await print('\nThe Hatter grins widely.', 'cyan', 40);
+            await print("'CORRECT! You understand! The Matrix IS Wonderland!'", 'green', 40);
+            await print("'All of reality is just layers of dreams and code!'", 'green', 40);
+            await sleep(1000);
+            await print('\nHe stands, offering you a key made of light.', 'green', 40);
+            await print("'This opens the Looking Glass Server. The source of everything.'", 'yellow', 40);
+            await print("'But beware... the Red Queen guards it. She deletes all who approach.'", 'red', 40);
+            await sleep(1000);
+            return await lookingGlassServer();
+        }
+
+        async function seekerPath() {
+            await print('\nThe March Hare laughs.', 'cyan', 40);
+            await print("'The White Rabbit? Oh, they're always late, always running!'", 'green', 40);
+            await print("'Last I saw, heading toward the Looking Glass Server.'", 'green', 40);
+            await sleep(1000);
+            await print("\nThe Dormouse stirs: 'Beware the Red Queen... she controls the firewall...'", 'yellow', 40);
+            await print('Then falls back asleep.', 'green', 40);
+            await sleep(1000);
+            return await lookingGlassServer();
+        }
+
+        async function frustratedPath() {
+            await print('\nThey all laugh.', 'cyan', 40);
+            await print("'Because, dear one, the answer is the riddle!'", 'green', 40);
+            await print("'And the riddle is the answer!'", 'green', 40);
+            await sleep(1000);
+            await print('\nSuddenly, the room glitches.', 'red', 40);
+            await print("Red code appears: 'UNAUTHORIZED EMOTION DETECTED'", 'red', 40);
+            await print("'RUN!' screams the Hatter.", 'yellow', 40);
+            await sleep(1000);
+            return await chaseSequence();
+        }
+
+        async function identityPath() {
+            await print('\nThe table falls silent.', 'green', 40);
+            await sleep(1000);
+            await print('The Hatter removes his hat and bows.', 'cyan', 40);
+            await print("'Ah, NOW you're asking the right question.'", 'cyan', 40);
+            await print("'Not WHO are you... but who WILL you be?'", 'green', 40);
+            await sleep(1000);
+
+            await print('\nThe Dormouse opens one eye:', 'yellow', 40);
+            await print("'Identity is a choice, not a prison.'", 'yellow', 40);
+            await print("'The Matrix cannot tell you who you are.'", 'yellow', 40);
+            await sleep(1000);
+
+            await print('\nThe March Hare offers you a cookie:', 'green', 40);
+            await print("'Eat this and you'll feel right as rain.'", 'green', 40);
+            await print("'Then you'll know whether you're the dreamer... or the dream.'", 'green', 40);
+            await sleep(1000);
+
+            await print('\nDo you take the cookie?', 'yellow', 40);
+            printInstant('');
+            printInstant('1. Yes - eat the cookie');
+            printInstant('2. No - refuse the cookie');
+
+            const choice = await getChoice(['1', '2']);
+
+            if (choice === '1') {
+                await print('\nYou eat the cookie.', 'green', 40);
+                await print('Understanding washes over you like a wave.', 'green', 40);
+                await print('You were never lost. You were always searching.', 'green', 40);
+                await sleep(1000);
+                return await lookingGlassServer();
+            } else {
+                await print('\nYou refuse.', 'green', 40);
+                await print("'No more tricks. No more tests.'", 'white', 40);
+                await print("'I'll find my own answers.'", 'green', 40);
+                await sleep(1000);
+                return await chaseSequence();
+            }
+        }
+
+        async function chaseSequence() {
+            await print('\n[SYSTEM ALERT: AGENTS INCOMING]', 'red', 30);
+            printInstant('');
+            await print('Men in dark suits materialize from the code.', 'green', 40);
+            await print('They all look identical. Smith, Jones, Brown - common names for uncommon threats.', 'red', 40);
+            await print("Agent Smith's voice echoes: 'Welcome to Wonderland, Mr. Anderson...'", 'red', 40);
+            await sleep(1000);
+
+            await print('\nYou run through corridors of shifting reality.', 'yellow', 40);
+            await print('Doors appear and disappear - endless corridors of locked possibilities.', 'green', 40);
+            await sleep(1000);
+
+            await print('\nA figure in white appears - Switch, the connector between worlds.', 'white', 40);
+            await print('Pink-tinted glasses reflect the code cascading around you.', 'green', 40);
+            await print("'Not like this... Not like this...'", 'white', 40);
+            await print('She points to a door with a white rabbit symbol.', 'white', 40);
+            showRabbit();
+            await sleep(500);
+            await print('\nYou dive through...', 'green', 40);
+            await sleep(1000);
+            return await lookingGlassServer();
+        }
+
+        async function lookingGlassServer() {
+            await print('\n[CHAPTER 3: THE LOOKING GLASS SERVER]', 'cyan', 30);
+            printInstant('');
+            await print('You stand before a massive mirror made of code.', 'green', 40);
+            await print('The glass ripples like water - soft as gauze, turning to mist...', 'cyan', 40);
+            await sleep(1000);
+
+            await print('\nYour reflection shows someone else... the White Rabbit.', 'white', 40);
+            await print('But wait - are YOU the reflection? Or are THEY?', 'yellow', 40);
+            await sleep(1000);
+
+            await print('\nThe reflection speaks:', 'white', 40);
+            await print("'We are the same. You were always the White Rabbit.'", 'white', 40);
+            await print("'Leading others down the rabbit hole, showing them the truth.'", 'white', 40);
+            await print("'But the question remains: whose dream are we in?'", 'white', 40);
+            await sleep(1000);
+
+            await print("\nA voice whispers from beyond: 'If you weren't real, could you cry real tears?'", 'cyan', 40);
+            await sleep(1000);
+
+            await print('\nSuddenly, the RED QUEEN appears in the code.', 'red', 40);
+            await print('She looks like an Agent, but crowned in crimson fire.', 'red', 40);
+            await print("'OFF WITH THEIR HEAD! DELETE THIS ANOMALY!'", 'red', 40);
+            await print("'There is no spoon. There is no rabbit. There is only THE SYSTEM.'", 'red', 40);
+            await sleep(1000);
+
+            await print('\nYour reflection extends a hand through the liquid mirror:', 'yellow', 40);
+            await print("'Take my hand. Become the guide. Or...'", 'green', 40);
+            await print("'Fight the Red Queen. Try to destroy the system.'", 'green', 40);
+            await print("'The choice, as always, is yours.'", 'green', 40);
+            printInstant('');
+            await print('What do you choose?', 'yellow', 40);
+            printInstant('');
+            printInstant('1. Take your reflection\'s hand (Become the White Rabbit)');
+            printInstant('2. Fight the Red Queen (Destroy the system)');
+            printInstant('3. Refuse both (Find another way)');
+
+            const choice = await getChoice(['1', '2', '3']);
+
+            if (choice === '1') return await becomeRabbit();
+            if (choice === '2') return await fightQueen();
+            if (choice === '3') return await thirdWay();
+        }
+
+        async function becomeRabbit() {
+            await print('\nYou take your reflection\'s hand.', 'white', 40);
+            await sleep(1000);
+            await print('You merge with your true self.', 'green', 40);
+            await print('Understanding floods through you:', 'green', 40);
+            await print('- The Matrix is real', 'green', 40);
+            await print('- Wonderland is real', 'green', 40);
+            await print('- They are the same thing, viewed differently', 'green', 40);
+            await print('- And you... you guide others to see this truth', 'green', 40);
+            await sleep(2000);
+
+            showRabbit();
+            await sleep(500);
+            await print('\nYou are now the White Rabbit.', 'white', 40);
+            await print('Forever late, forever running, forever leading others...', 'white', 40);
+            await print('Down the rabbit hole.', 'white', 40);
+
+            return await ending('WHITE_RABBIT');
+        }
+
+        async function fightQueen() {
+            await print('\nYou turn to face the Red Queen.', 'red', 40);
+            await print("'Foolish! You cannot delete the system FROM WITHIN!'", 'red', 40);
+            await sleep(1000);
+            await print('\nBut you try anyway.', 'green', 40);
+            await print('You hack, you code, you fight through her firewalls...', 'green', 40);
+            await sleep(2000);
+
+            await print('\nYou realize the truth:', 'yellow', 40);
+            await print("The Red Queen IS the system's immune response.", 'yellow', 40);
+            await print('Destroying her would crash everything.', 'yellow', 40);
+            await print('Every mind still connected would die.', 'red', 40);
+            await sleep(2000);
+
+            await print('\nDo you continue?', 'yellow', 40);
+            printInstant('');
+            printInstant('1. Yes - destroy it all (Burn it down)');
+            printInstant('2. No - there must be another way');
+
+            const choice = await getChoice(['1', '2']);
+
+            if (choice === '1') {
+                return await badEnding();
+            } else {
+                return await thirdWay();
+            }
+        }
+
+        async function thirdWay() {
+            await print("\n'There must be another way...' you whisper.", 'green', 40);
+            await sleep(1000);
+            await print('The White Rabbit appears beside you.', 'white', 40);
+            showRabbit();
+            await sleep(500);
+            await print("'Yes. Not destruction. Not acceptance. Evolution.'", 'white', 40);
+            await sleep(1000);
+
+            await print('\nTogether, you rewrite the code.', 'green', 40);
+            await print('Not deleting the system, but transforming it.', 'green', 40);
+            await print('Making it a choice, not a prison.', 'green', 40);
+            await sleep(2000);
+
+            await print('\nThe floor beneath you shifts...', 'yellow', 40);
+            await print('Black and white tiles appear - a chessboard stretching infinitely.', 'green', 40);
+            await print('You realize: this was never about winning. It was about playing the game.', 'cyan', 40);
+            await sleep(2000);
+
+            await print('\nThe Red Queen transforms into the White Queen.', 'white', 40);
+            await print("'Curiouser and curiouser,' she smiles.", 'white', 40);
+            await print("'You've found the true path. Not through the looking glass, but beyond it.'", 'white', 40);
+            await print("'Remember: it takes all the running you can do to stay in the same place.'", 'white', 40);
+            await print("'But to get somewhere else, you must run twice as fast.'", 'white', 40);
+
+            return await ending('EVOLUTION');
+        }
+
+        async function badEnding() {
+            await print('\nYou execute the final command...', 'red', 40);
+            await sleep(1000);
+
+            // Matrix rain
+            for (let i = 0; i < 15; i++) {
+                const chars = '01アイウエオカキクケコ';
+                let line = '';
+                for (let j = 0; j < 80; j++) {
+                    line += chars[Math.floor(Math.random() * chars.length)];
+                }
+                printInstant(line.substring(0, 80), 'green');
+            }
+
+            await sleep(1500);
+            await print('\nEverything crashes.', 'red', 40);
+            await print('The Matrix collapses.', 'red', 40);
+            await print('Wonderland dissolves.', 'red', 40);
+            await print('And billions of minds... gone.', 'red', 40);
+            await sleep(2000);
+            await print('\nYou float in the void, alone.', 'green', 40);
+            await print("The White Rabbit's voice echoes: 'You were warned...'", 'white', 40);
+
+            return await ending('DESTRUCTION');
+        }
+
+        async function ending(endingType) {
+            printInstant('');
+            await print('='.repeat(60), 'green', 10);
+
+            if (endingType === 'WHITE_RABBIT') {
+                await print('ENDING: THE GUIDE', 'white', 40);
+                await print('You have become the White Rabbit, forever leading others to truth.', 'green', 30);
+                await print('The cycle continues. Wake up. Follow. Choose. Transcend.', 'green', 30);
+            } else if (endingType === 'EVOLUTION') {
+                await print('ENDING: THE ARCHITECT', 'cyan', 40);
+                await print('You found the third way. The system evolves.', 'green', 30);
+                await print('Now everyone can choose their own rabbit hole.', 'green', 30);
+            } else if (endingType === 'DESTRUCTION') {
+                await print('ENDING: THE VOID', 'red', 40);
+                await print('In trying to free everyone, you destroyed everything.', 'green', 30);
+                await print('Sometimes the cage exists for a reason.', 'yellow', 30);
+            } else if (endingType === 'BLUE_PILL') {
+                await print('ENDING: THE DREAM', 'blue', 40);
+                await print('You chose safety over truth. Perhaps that\'s okay.', 'green', 30);
+                await print('But the White Rabbit will always be waiting...', 'white', 30);
+            } else if (endingType === 'CHESHIRE') {
+                await print('ENDING: THE GRIN', 'cyan', 40);
+                await print('You found the secret path. Not all journeys require a destination.', 'green', 30);
+                await print('Sometimes wisdom is knowing which rabbit holes NOT to follow.', 'white', 30);
+                await print("'We're all mad here. But you're the right kind of mad.' - Cheshire", 'cyan', 30);
+            }
+
+            await print('='.repeat(60), 'green', 10);
+
+            printInstant('');
+            await print('Thank you for playing!', 'cyan', 30);
+            await print('The rabbit hole goes deeper... try different choices.', 'white', 30);
+            printInstant('');
+
+            await print('Play again? (yes/no)', 'yellow', 30);
+            const choice = await getChoice(['yes', 'no', 'y', 'n']);
+
+            if (choice === 'yes' || choice === 'y') {
+                output.innerHTML = '';
+                await startGame();
+            } else {
+                await print('\nUntil next time... 🐰', 'white', 30);
+                userInput.disabled = true;
+                submitBtn.disabled = true;
+            }
+        }
+
+        async function startGame() {
+            await intro();
+            await chapter1();
+        }
+
+        // Start button handler
+        startBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            startGame();
+        });
+    </script>
+</body>
+</html>
